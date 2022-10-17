@@ -9,29 +9,6 @@ from BCBio import GFF
 from Bio import SeqIO
 from time import strftime
 
-#import BCBio.GFF
-#import csv
-#import fractions
-#import glob
-#import multiprocessing
-#import numpy
-#import os
-#import subprocess
-#import time
-#from Bio import SeqFeature
-#try:
-#	from Bio.Alphabet import IUPAC
-#except ImportError:
-#	IUPAC = None
-#from Bio.Seq import Seq
-#from Bio.SeqFeature import FeatureLocation
-#from Bio.SeqRecord import SeqRecord
-#from Bio.SeqUtils.ProtParam import ProteinAnalysis
-#from collections import OrderedDict, defaultdict
-#from itertools import product
-#from pathlib import Path
-#from scipy import signal
-
 warnings.filterwarnings("ignore")
 
 ## Processing the arguments
