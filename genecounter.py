@@ -12,7 +12,7 @@ from time import strftime
 ## Processing the arguments
 parser = argparse.ArgumentParser(description='genecounter.py is a script that interprets output files from ORF callers and retrieve a table with the IDs and the numnber of genes')
 basic_group = parser.add_argument_group('Basic options for genecounter [REQUIRED]')
-basic_group.add_argument("--input", dest="inputfile", type=str, required=True, help='Input file as a FASTA file', metavar="FASTAFILE")
+basic_group.add_argument("--input", dest="inputfile", type=str, required=True, help='Input file from the ORF caller program', metavar="INPUTFILE")
 
 advanced_general_group = parser.add_argument_group('Advanced general options for genecounter [OPTIONAL]')
 advanced_general_group.add_argument("--out", dest="rootoutput", type=str, help='Name of the outputs files (without extension)', metavar="OUTPUTNAME")
