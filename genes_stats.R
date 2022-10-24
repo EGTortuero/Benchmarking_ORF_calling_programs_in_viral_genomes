@@ -2,22 +2,24 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 library(cowplot)
+library(emmeans)
+library(FSA)
 
 ## FIRST TEST: No of ORFs
 
-tablaoriginal <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.ORIGINAL.tsv", header = T, sep = "\t")
-tablaprodigal <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.PRODIGAL.tsv", header = T, sep = "\t")
-tablametaprodigal <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.METAPRODIGAL.tsv", header = T, sep = "\t")
-tablaglimmer <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.GLIMMER.tsv", header = T, sep = "\t")
-tablagenemarks <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.GENEMARKS.tsv", header = T, sep = "\t")
-tablaphanotate <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.PHANOTATE.tsv", header = T, sep = "\t")
-tablafraggenescan <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.FRAGGENESCAN.tsv", header = T, sep = "\t")
-tablamga <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.MGA.tsv", header = T, sep = "\t")
-tablaaugustussa <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.AUGUSTUS_SAUREUS.tsv", header = T, sep = "\t")
-tablaaugustusec <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.AUGUSTUS_ECOLI.tsv", header = T, sep = "\t")
-tablaaugustushs <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.AUGUSTUS_HUMAN.tsv", header = T, sep = "\t")
-tablahost <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/list_organisms.tsv", header = T, sep = "\t")
-tablanucleic <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/list_viralnucleic_2.csv", header = T, sep = "\t")
+tablaoriginal <- read.csv("viral_genomes.ORIGINAL.tsv", header = T, sep = "\t")
+tablaprodigal <- read.csv("viral_genomes.PRODIGAL.tsv", header = T, sep = "\t")
+tablametaprodigal <- read.csv("viral_genomes.METAPRODIGAL.tsv", header = T, sep = "\t")
+tablaglimmer <- read.csv("viral_genomes.GLIMMER.tsv", header = T, sep = "\t")
+tablagenemarks <- read.csv("viral_genomes.GENEMARKS.tsv", header = T, sep = "\t")
+tablaphanotate <- read.csv("viral_genomes.PHANOTATE.tsv", header = T, sep = "\t")
+tablafraggenescan <- read.csv("viral_genomes.FRAGGENESCAN.tsv", header = T, sep = "\t")
+tablamga <- read.csv("viral_genomes.MGA.tsv", header = T, sep = "\t")
+tablaaugustussa <- read.csv("viral_genomes.AUGUSTUS_SAUREUS.tsv", header = T, sep = "\t")
+tablaaugustusec <- read.csv("viral_genomes.AUGUSTUS_ECOLI.tsv", header = T, sep = "\t")
+tablaaugustushs <- read.csv("viral_genomes.AUGUSTUS_HUMAN.tsv", header = T, sep = "\t")
+tablahost <- read.csv("list_organisms.tsv", header = T, sep = "\t")
+tablanucleic <- read.csv("list_viralnucleic_2.csv", header = T, sep = "\t")
 
 tabula <- tablaoriginal %>% 
   full_join(tablahost, by = c("ID" = "ID")) %>%
@@ -63,10 +65,11 @@ tabula.long.2 <- tabula %>%
 generallm <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula.long.2)
 anova(generallm)
 summary(generallm)
+pairs(emtrends(generallm, ~Program, var="No_CDS"))
 
 # Eukaryotic viruses
 
-tabula_euk <- tabula[grepl("Eukaryote", tabula$Host_domain),]
+tabula_euk <- tabula %>% filter(Host_domain == "Eukaryote")
 prodigallm_euk <- lm(CDSs_PRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_euk)
 metaprodigallm_euk <- lm(CDSs_METAPRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_euk)
 glimmerlm_euk <- lm(CDSs_GLIMMER ~ CDSs_EXPECTED + 0, data = tabula_euk)
@@ -88,15 +91,17 @@ summary(augustuslm_euk)
 summary(augustus2lm_euk)
 summary(augustus3lm_euk)
 
-tabula_euk.long.2 <- tabula %>%
+tabula_euk.long.2 <- tabula_euk %>%
   pivot_longer(cols=c(5:14), names_to = "Program", values_to = "No_CDS")
 generallm_euk <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula_euk.long.2)
 anova(generallm_euk)
 summary(generallm_euk)
+pairs(emtrends(generallm_euk, ~Program, var="No_CDS"))
+
 
 # Archaeal viruses
 
-tabula_arc <- tabula[grepl("Archaea", tabula$Host_domain),]
+tabula_arc <- tabula %>% filter(Host_domain == "Archaea")
 prodigallm_arc <- lm(CDSs_PRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_arc)
 metaprodigallm_arc <- lm(CDSs_METAPRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_arc)
 glimmerlm_arc <- lm(CDSs_GLIMMER ~ CDSs_EXPECTED + 0, data = tabula_arc)
@@ -118,9 +123,17 @@ summary(augustuslm_arc)
 summary(augustus2lm_arc)
 summary(augustus3lm_arc)
 
+tabula_arc.long.2 <- tabula_arc %>%
+  pivot_longer(cols=c(5:14), names_to = "Program", values_to = "No_CDS")
+generallm_arc <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula_arc.long.2)
+anova(generallm_arc)
+summary(generallm_arc)
+pairs(emtrends(generallm_arc, ~Program, var="No_CDS"))
+
+
 # Bacteriophages
 
-tabula_bac <- tabula[grepl("Bacteria", tabula$Host_domain),]
+tabula_bac <- tabula %>% filter(Host_domain == "Bacteria")
 prodigallm_bac <- lm(CDSs_PRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_bac)
 metaprodigallm_bac <- lm(CDSs_METAPRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_bac)
 glimmerlm_bac <- lm(CDSs_GLIMMER ~ CDSs_EXPECTED + 0, data = tabula_bac)
@@ -142,15 +155,17 @@ summary(augustuslm_bac)
 summary(augustus2lm_bac)
 summary(augustus3lm_bac)
 
-tabula_bac.long.2 <- tabula %>%
+tabula_bac.long.2 <- tabula_bac %>%
   pivot_longer(cols=c(5:14), names_to = "Program", values_to = "No_CDS")
 generallm_bac <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula_bac.long.2)
 anova(generallm_bac)
 summary(generallm_bac)
+pairs(emtrends(generallm_bac, ~Program, var="No_CDS"))
+
 
 # DNA viruses
 
-tabula_dna <- tabula[grepl("DNA", tabula$Nucleic_acid),]
+tabula_dna <- tabula %>% filter(Nucleic_acid == "DNA")
 prodigallm_dna <- lm(CDSs_PRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_dna)
 metaprodigallm_dna <- lm(CDSs_METAPRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_dna)
 glimmerlm_dna <- lm(CDSs_GLIMMER ~ CDSs_EXPECTED + 0, data = tabula_dna)
@@ -172,15 +187,17 @@ summary(augustuslm_dna)
 summary(augustus2lm_dna)
 summary(augustus3lm_dna)
 
-tabula_dna.long.2 <- tabula %>%
+tabula_dna.long.2 <- tabula_dna %>%
   pivot_longer(cols=c(5:14), names_to = "Program", values_to = "No_CDS")
 generallm_dna <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula_dna.long.2)
 anova(generallm_dna)
 summary(generallm_dna)
+pairs(emtrends(generallm_dna, ~Program, var="No_CDS"))
+
 
 # RNA viruses
 
-tabula_rna <- tabula[grepl("RNA", tabula$Nucleic_acid),]
+tabula_rna <- tabula %>% filter(Nucleic_acid == "RNA")
 prodigallm_rna <- lm(CDSs_PRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_rna)
 metaprodigallm_rna <- lm(CDSs_METAPRODIGAL ~ CDSs_EXPECTED + 0, data = tabula_rna)
 glimmerlm_rna <- lm(CDSs_GLIMMER ~ CDSs_EXPECTED + 0, data = tabula_rna)
@@ -202,338 +219,1192 @@ summary(augustuslm_rna)
 summary(augustus2lm_rna)
 summary(augustus3lm_rna)
 
-tabula_rna.long.2 <- tabula %>%
+tabula_rna.long.2 <- tabula_rna %>%
   pivot_longer(cols=c(5:14), names_to = "Program", values_to = "No_CDS")
 generallm_rna <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula_rna.long.2)
 anova(generallm_rna)
 summary(generallm_rna)
-
-# Graph
-tabula2 <- reshape2::melt(tabula, id.vars="CDSs_EXPECTED")
-tabula2 <- tabula2[!grepl("ID", tabula2$variable),]
-tabula2 <- tabula2[!grepl("Host_domain", tabula2$variable),]
-tabula2 <- tabula2[!grepl("Nucleic_acid", tabula2$variable),]
-
-genplot <- ggplot(tabula2, aes(x=CDSs_EXPECTED, y=as.numeric(value),
-                               color = as.factor(variable))) +
-  xlim(0,4000) + ylim(0,4000) + ylab("CDSs_OBSERVED") + geom_point() +
-  geom_abline(intercept=0, size=1, slope=prodigallm$coefficients[1], color='firebrick') +
-  geom_abline(intercept=0, size=1, slope=metaprodigallm$coefficients[1], color='orange') +
-  geom_abline(intercept=0, size=1, slope=glimmerlm$coefficients[1], color='chartreuse3') +
-  geom_abline(intercept=0, size=1, slope=genemarkslm$coefficients[1], color='springgreen4') +
-  geom_abline(intercept=0, size=1, slope=phanotatelm$coefficients[1], color='cyan3') +
-  geom_abline(intercept=0, size=1, slope=fraggenescanlm$coefficients[1], color='blue') +
-  geom_abline(intercept=0, size=1, slope=mgalm$coefficients[1], color='deeppink') +
-  geom_abline(intercept=0, size=1, slope=augustuslm$coefficients[1], color='purple') +
-  geom_abline(intercept=0, size=1, slope=augustus2lm$coefficients[1], color='lightpink') +
-  geom_abline(intercept=0, size=1, slope=augustus3lm$coefficients[1], color='goldenrod') +
-  geom_abline(intercept = 0, slope=1, size=1.5, color = "black", linetype = "dashed") +
-  theme(legend.position = "top", legend.title = element_blank()) + 
-  scale_color_manual(values=c('firebrick', 'orange', 'chartreuse3', 'springgreen4', 'cyan3', 
-    'blue', 'deeppink', 'purple', 'lightpink', 'goldenrod'),
-                     labels=c("Prodigal", "Metaprodigal", "GLIMMER", "GeneMarkS", 
-                      "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS - S.aureus", 
-                      "AUGUSTUS - E. coli", "AUGUSTUS - H. sapiens")) + 
-  labs(x = "", y = "No. CDS (Program)")
-
-tabula_arc.long.2 <- tabula %>%
-  pivot_longer(cols=c(5:14), names_to = "Program", values_to = "No_CDS")
-generallm_arc <- lm(CDSs_EXPECTED ~ No_CDS * Program + 0, data = tabula_arc.long.2)
-anova(generallm_arc)
-summary(generallm_arc)
-
-tabula2_arc <- reshape2::melt(tabula_arc, id.vars="CDSs_EXPECTED")
-tabula2_arc <- tabula2_arc[!grepl("ID", tabula2_arc$variable),]
-tabula2_arc <- tabula2_arc[!grepl("Host_domain", tabula2_arc$variable),]
-tabula2_arc <- tabula2_arc[!grepl("Nucleic_acid", tabula2_arc$variable),]
-
-arcplot <- ggplot(tabula2_arc, aes(x=CDSs_EXPECTED, y=as.numeric(value),
-                                   color = as.factor(variable))) +
-  scale_color_manual(values=c('firebrick', 'orange', 'chartreuse3', 'springgreen4', 
-    'cyan3', 'blue', 'deeppink', 'purple', 'lightpink', 'goldenrod')) +
-  xlim(0,500) + ylim(0,500) + geom_point() +
-  geom_abline(intercept=0, size=1, slope=prodigallm_arc$coefficients[1], color='firebrick') +
-  geom_abline(intercept=0, size=1, slope=metaprodigallm_arc$coefficients[1], color='orange') +
-  geom_abline(intercept=0, size=1, slope=glimmerlm_arc$coefficients[1], color='chartreuse3') +
-  geom_abline(intercept=0, size=1, slope=genemarkslm_arc$coefficients[1], color='springgreen4') +
-  geom_abline(intercept=0, size=1, slope=phanotatelm_arc$coefficients[1], color='cyan3') +
-  geom_abline(intercept=0, size=1, slope=fraggenescanlm_arc$coefficients[1], color='blue') +
-  geom_abline(intercept=0, size=1, slope=mgalm_arc$coefficients[1], color='deeppink') +
-  geom_abline(intercept=0, size=1, slope=augustuslm_arc$coefficients[1], color='purple') +
-  geom_abline(intercept=0, size=1, slope=augustus2lm_arc$coefficients[1], color='lightpink') +
-  geom_abline(intercept=0, size=1, slope=augustus3lm_arc$coefficients[1], color='goldenrod') +
-  geom_abline(intercept = 0, slope=1, size=1.5, color = "black", linetype = "dashed") +
-  theme(legend.position = "none", legend.title = element_blank()) + 
-  labs(x = "", y = "")
-
-tabula2_bac <- reshape2::melt(tabula_bac, id.vars="CDSs_EXPECTED")
-tabula2_bac <- tabula2_bac[!grepl("ID", tabula2_bac$variable),]
-tabula2_bac <- tabula2_bac[!grepl("Host_domain", tabula2_bac$variable),]
-tabula2_bac <- tabula2_bac[!grepl("Nucleic_acid", tabula2_bac$variable),]
-
-bacplot <- ggplot(tabula2_bac, aes(x=CDSs_EXPECTED, y=as.numeric(value),
-                                   color = as.factor(variable))) +
-  scale_color_manual(values=c('firebrick', 'orange', 'chartreuse3', 'springgreen4', 
-                              'cyan3', 'blue', 'deeppink', 'purple', 'lightpink', 'goldenrod')) +
-  xlim(0,1000) + ylim(0,1000) + geom_point() +
-  geom_abline(intercept=0, size = 1, slope=prodigallm_bac$coefficients[1], color='firebrick') +
-  geom_abline(intercept=0, size = 1, slope=metaprodigallm_bac$coefficients[1], color='orange') +
-  geom_abline(intercept=0, size = 1, slope=glimmerlm_bac$coefficients[1], color='chartreuse3') +
-  geom_abline(intercept=0, size = 1, slope=genemarkslm_bac$coefficients[1], color='springgreen4') +
-  geom_abline(intercept=0, size = 1, slope=phanotatelm_bac$coefficients[1], color='cyan3') +
-  geom_abline(intercept=0, size = 1, slope=fraggenescanlm_bac$coefficients[1], color='blue') +
-  geom_abline(intercept=0, size = 1, slope=mgalm_bac$coefficients[1], color='deeppink') +
-  geom_abline(intercept=0, size = 1, slope=augustuslm_bac$coefficients[1], color='purple') +
-  geom_abline(intercept=0, size = 1, slope=augustus2lm_bac$coefficients[1], color='lightpink') +
-  geom_abline(intercept=0, size = 1, slope=augustus3lm_bac$coefficients[1], color='goldenrod') +
-  geom_abline(intercept = 0, slope=1, size = 1.5, color = "black", linetype = "dashed") +
-  theme(legend.position = "none", legend.title = element_blank()) + 
-  labs(x = "", y = "No. CDS (Program)")
-
-tabula2_euk <- reshape2::melt(tabula_euk, id.vars="CDSs_EXPECTED")
-tabula2_euk <- tabula2_euk[!grepl("ID", tabula2_euk$variable),]
-tabula2_euk <- tabula2_euk[!grepl("Host_domain", tabula2_euk$variable),]
-tabula2_euk <- tabula2_euk[!grepl("Nucleic_acid", tabula2_euk$variable),]
-
-eukplot <- ggplot(tabula2_euk, aes(x=CDSs_EXPECTED, y=as.numeric(value),
-                                   color = as.factor(variable))) +
-  scale_color_manual(values=c('firebrick', 'orange', 'chartreuse3', 'springgreen4', 
-                              'cyan3', 'blue', 'deeppink', 'purple', 'lightpink', 'goldenrod')) +
-  xlim(0,4000) + ylim(0,4000) + geom_point() +
-  geom_abline(intercept=0, size = 1, slope=prodigallm_euk$coefficients[1], color='firebrick') +
-  geom_abline(intercept=0, size = 1, slope=metaprodigallm_euk$coefficients[1], color='orange') +
-  geom_abline(intercept=0, size = 1, slope=glimmerlm_euk$coefficients[1], color='chartreuse3') +
-  geom_abline(intercept=0, size = 1, slope=genemarkslm_euk$coefficients[1], color='springgreen4') +
-  geom_abline(intercept=0, size = 1, slope=phanotatelm_euk$coefficients[1], color='cyan3') +
-  geom_abline(intercept=0, size = 1, slope=fraggenescanlm_euk$coefficients[1], color='blue') +
-  geom_abline(intercept=0, size = 1, slope=mgalm_euk$coefficients[1], color='deeppink') +
-  geom_abline(intercept=0, size = 1, slope=augustuslm_euk$coefficients[1], color='purple') +
-  geom_abline(intercept=0, size = 1, slope=augustus2lm_euk$coefficients[1], color='lightpink') +
-  geom_abline(intercept=0, size = 1, slope=augustus3lm_euk$coefficients[1], color='goldenrod') +
-  geom_abline(intercept = 0, slope=1, size=1.5, color = "black", linetype = "dashed") +
-  theme(legend.position = "none", legend.title = element_blank()) + 
-  labs(x = "", y = "")
-
-tabula2_dna <- reshape2::melt(tabula_dna, id.vars="CDSs_EXPECTED")
-tabula2_dna <- tabula2_dna[!grepl("ID", tabula2_dna$variable),]
-tabula2_dna <- tabula2_dna[!grepl("Host_domain", tabula2_dna$variable),]
-tabula2_dna <- tabula2_dna[!grepl("Nucleic_acid", tabula2_dna$variable),]
-
-dnaplot <- ggplot(tabula2_dna, aes(x=CDSs_EXPECTED, y=as.numeric(value),
-                                   color = as.factor(variable))) +
-  scale_color_manual(values=c('firebrick', 'orange', 'chartreuse3', 'springgreen4', 
-                              'cyan3', 'blue', 'deeppink', 'purple', 'lightpink', 'goldenrod')) +
-  xlim(0,4000) + ylim(0,4000) + geom_point() +
-  geom_abline(intercept=0, size = 1, slope=prodigallm_dna$coefficients[1], color='firebrick') +
-  geom_abline(intercept=0, size = 1, slope=metaprodigallm_dna$coefficients[1], color='orange') +
-  geom_abline(intercept=0, size = 1, slope=glimmerlm_dna$coefficients[1], color='chartreuse3') +
-  geom_abline(intercept=0, size = 1, slope=genemarkslm_dna$coefficients[1], color='springgreen4') +
-  geom_abline(intercept=0, size = 1, slope=phanotatelm_dna$coefficients[1], color='cyan3') +
-  geom_abline(intercept=0, size = 1, slope=fraggenescanlm_dna$coefficients[1], color='blue') +
-  geom_abline(intercept=0, size = 1, slope=mgalm_dna$coefficients[1], color='deeppink') +
-  geom_abline(intercept=0, size = 1, slope=augustuslm_dna$coefficients[1], color='purple') +
-  geom_abline(intercept=0, size = 1, slope=augustus2lm_dna$coefficients[1], color='lightpink') +
-  geom_abline(intercept=0, size = 1, slope=augustus3lm_dna$coefficients[1], color='goldenrod') +
-  geom_abline(intercept = 0, slope=1, size = 1.5, color = "black", linetype = "dashed") +
-  theme(legend.position = "none", legend.title = element_blank()) + 
-  labs(x = "No. CDS (RefSeq)", y = "No. CDS (Program)")
-
-tabula2_rna <- reshape2::melt(tabula_rna, id.vars="CDSs_EXPECTED")
-tabula2_rna <- tabula2_rna[!grepl("ID", tabula2_rna$variable),]
-tabula2_rna <- tabula2_rna[!grepl("Host_domain", tabula2_rna$variable),]
-tabula2_rna <- tabula2_rna[!grepl("Nucleic_acid", tabula2_rna$variable),]
-
-rnaplot <- ggplot(tabula2_rna, aes(x=CDSs_EXPECTED, y=as.numeric(value),
-                                   color = as.factor(variable))) +
-  scale_color_manual(values=c('firebrick', 'orange', 'chartreuse3', 'springgreen4', 
-                              'cyan3', 'blue', 'deeppink', 'purple', 'lightpink', 'goldenrod')) +
-  xlim(0,75) + ylim(0,75) + geom_point() +
-  geom_abline(intercept=0, size = 1, slope=prodigallm_rna$coefficients[1], color='firebrick') +
-  geom_abline(intercept=0, size = 1, slope=metaprodigallm_rna$coefficients[1], color='orange') +
-  geom_abline(intercept=0, size = 1, slope=glimmerlm_rna$coefficients[1], color='chartreuse3') +
-  geom_abline(intercept=0, size = 1, slope=genemarkslm_rna$coefficients[1], color='springgreen4') +
-  geom_abline(intercept=0, size = 1, slope=phanotatelm_rna$coefficients[1], color='cyan3') +
-  geom_abline(intercept=0, size = 1, slope=fraggenescanlm_rna$coefficients[1], color='blue') +
-  geom_abline(intercept=0, size = 1, slope=mgalm_rna$coefficients[1], color='deeppink') +
-  geom_abline(intercept=0, size = 1, slope=augustuslm_rna$coefficients[1], color='purple') +
-  geom_abline(intercept=0, size = 1, slope=augustus2lm_rna$coefficients[1], color='lightpink') +
-  geom_abline(intercept=0, size = 1, slope=augustus3lm_rna$coefficients[1], color='goldenrod') +
-  geom_abline(intercept = 0, slope=1, size = 1.5, color = "black", linetype = "dashed") +
-  theme(legend.position = "none", legend.title = element_blank()) + 
-  labs(x = "No. CDS (RefSeq)", y = "")
-
-legend <- get_legend(genplot)
-svg("figure_1.svg", width = 7, height = 11)
-topgrid <- plot_grid(genplot + theme(legend.position = "null"), arcplot, bacplot, 
-  eukplot, dnaplot, rnaplot, labels = c("A", "B", "C", "D", "E", "F"), ncol = 2)
-plot_grid(topgrid, legend, ncol = 1, rel_heights = c(3,.25))
-dev.off()
+pairs(emtrends(generallm_rna, ~Program, var="No_CDS"))
 
 ## SECOND TEST: Coordinates
 
-TPtabula_prodigal <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.PRODIGAL.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_metaprodigal <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.METAPRODIGAL.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_glimmer <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.GLIMMER.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_genemarks <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.GENEMARKS.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_phanotate <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.PHANOTATE.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_fraggenescan <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.FRAGGENESCAN.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_mga <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.MGA.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_augustus_sa <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.AUGUSTUS_SAUREUS.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_augustus_ec <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.AUGUSTUS_ECOLI.TPtable.tsv", header = T, sep = "\t") %>% 
-  full_join(tablahost, by = c("Genome" = "ID")) %>%
-  full_join(tablanucleic, by = c("Genome" = "ID"))
-TPtabula_augustus_hs <- read.csv("C:\\Users/SES089/OneDrive - University of Salford/Documents/Project_LES/VIRUS_RefSeq/viral_genomes.AUGUSTUS_HUMAN.TPtable.tsv", header = T, sep = "\t") %>% 
+Basal_table <- read.csv("viral_genomes.PRODIGAL.TPtable.tsv", header = T, sep = "\t") %>% 
+  rename(TP_Prodigal = TP, FP_Prodigal = FP, FN_Prodigal = FN) %>%
+  full_join(read.csv("viral_genomes.METAPRODIGAL.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_MetaProdigal = TP, FP_MetaProdigal = FP, FN_MetaProdigal = FN) %>%
+  full_join(read.csv("viral_genomes.GLIMMER.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_Glimmer = TP, FP_Glimmer = FP, FN_Glimmer = FN) %>%
+  full_join(read.csv("viral_genomes.GENEMARKS.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_GeneMarkS = TP, FP_GeneMarkS = FP, FN_GeneMarkS = FN) %>%
+  full_join(read.csv("viral_genomes.PHANOTATE.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_Phanotate = TP, FP_Phanotate = FP, FN_Phanotate = FN) %>%
+  full_join(read.csv("viral_genomes.FRAGGENESCAN.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_FragGeneScan = TP, FP_FragGeneScan = FP, FN_FragGeneScan = FN) %>%
+  full_join(read.csv("viral_genomes.MGA.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_MGA = TP, FP_MGA = FP, FN_MGA = FN) %>%
+  full_join(read.csv("viral_genomes.AUGUSTUS_SAUREUS.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_AUGUSTUS_SA = TP, FP_AUGUSTUS_SA = FP, FN_AUGUSTUS_SA = FN) %>%
+  full_join(read.csv("viral_genomes.AUGUSTUS_ECOLI.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_AUGUSTUS_EC = TP, FP_AUGUSTUS_EC = FP, FN_AUGUSTUS_EC = FN) %>%
+  full_join(read.csv("viral_genomes.AUGUSTUS_HUMAN.TPtable.tsv", header = T, sep = "\t"), by = c("Genome" = "Genome")) %>%
+  rename(TP_AUGUSTUS_HS = TP, FP_AUGUSTUS_HS = FP, FN_AUGUSTUS_HS = FN) %>%
   full_join(tablahost, by = c("Genome" = "ID")) %>%
   full_join(tablanucleic, by = c("Genome" = "ID"))
 
-# General
+# General (Real, absolute values)
 
-sum_prodigal <- TPtabula_prodigal %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_metaprodigal <- TPtabula_metaprodigal %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_glimmer <- TPtabula_glimmer %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_genemarks <- TPtabula_genemarks %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_phanotate <- TPtabula_phanotate %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_fraggenescan <- TPtabula_fraggenescan %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_mga <- TPtabula_mga %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_augustus_sa <- TPtabula_augustus_sa %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_augustus_ec <- TPtabula_augustus_ec %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-sum_augustus_hs <- TPtabula_augustus_hs %>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
+sum_all <-Basal_table %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE) %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
 
-prodigal_f1 = (2 * sum_prodigal$TP) / (2 * sum_prodigal$TP + sum_prodigal$FP + sum_prodigal$FN)
-prodigal_precision = sum_prodigal$TP / (sum_prodigal$TP + sum_prodigal$FP)
-prodigal_sensitivity = sum_prodigal$TP / (sum_prodigal$TP + sum_prodigal$FN)
-prodigal_fdr = sum_prodigal$FP / (sum_prodigal$TP + sum_prodigal$FP)
-prodigal_fnr = sum_prodigal$FN / (sum_prodigal$TP + sum_prodigal$FN)
-prodigal_f1
-prodigal_precision
-prodigal_sensitivity
-prodigal_fdr
-prodigal_fnr
+# General (Subsapling)
 
-metaprodigal_f1 = (2 * sum_metaprodigal$TP) / (2 * sum_metaprodigal$TP + sum_metaprodigal$FP + sum_metaprodigal$FN)
-metaprodigal_precision = sum_metaprodigal$TP / (sum_metaprodigal$TP + sum_metaprodigal$FP)
-metaprodigal_sensitivity = sum_metaprodigal$TP / (sum_metaprodigal$TP + sum_metaprodigal$FN)
-metaprodigal_fdr = sum_metaprodigal$FP / (sum_metaprodigal$TP + sum_metaprodigal$FP)
-metaprodigal_fnr = sum_metaprodigal$FN / (sum_metaprodigal$TP + sum_metaprodigal$FN)
-metaprodigal_f1
-metaprodigal_precision
-metaprodigal_sensitivity
-metaprodigal_fdr
-metaprodigal_fnr
+listofdfs = list()
+for(i in 1:1000){
+  listofdfs[[i]] <- Basal_table %>%
+    slice_sample(prop = 0.1)
+}
+dfofdfs <- tibble(d = 1:1000, data = listofdfs)
 
-glimmer_f1 = (2 * sum_glimmer$TP) / (2 * sum_glimmer$TP + sum_glimmer$FP + sum_glimmer$FN)
-glimmer_precision = sum_glimmer$TP / (sum_glimmer$TP + sum_glimmer$FP)
-glimmer_sensitivity = sum_glimmer$TP / (sum_glimmer$TP + sum_glimmer$FN)
-glimmer_fdr = sum_glimmer$FP / (sum_glimmer$TP + sum_glimmer$FP)
-glimmer_fnr = sum_glimmer$FN / (sum_glimmer$TP + sum_glimmer$FN)
-glimmer_f1
-glimmer_precision
-glimmer_sensitivity
-glimmer_fdr
-glimmer_fnr
+sum_all_subsamples <- list()
+for(i in 1:1000){
+  sum_all_subsamples[[i]] <- dfofdfs$data[[i]] %>%
+    summarize_if(is.numeric, sum, na.rm=TRUE)
+}
 
-genemarks_f1 = (2 * sum_genemarks$TP) / (2 * sum_genemarks$TP + sum_genemarks$FP + sum_genemarks$FN)
-genemarks_precision = sum_genemarks$TP / (sum_genemarks$TP + sum_genemarks$FP)
-genemarks_sensitivity = sum_genemarks$TP / (sum_genemarks$TP + sum_genemarks$FN)
-genemarks_fdr = sum_genemarks$FP / (sum_genemarks$TP + sum_genemarks$FP)
-genemarks_fnr = sum_genemarks$FN / (sum_genemarks$TP + sum_genemarks$FN)
-genemarks_f1
-genemarks_precision
-genemarks_sensitivity
-genemarks_fdr
-genemarks_fnr
+subsamples_sum_all <- bind_rows(sum_all_subsamples, .id = "subsample_number") %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUSSA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSEC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSHS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
 
-phanotate_f1 = (2 * sum_phanotate$TP) / (2 * sum_phanotate$TP + sum_phanotate$FP + sum_phanotate$FN)
-phanotate_precision = sum_phanotate$TP / (sum_phanotate$TP + sum_phanotate$FP)
-phanotate_sensitivity = sum_phanotate$TP / (sum_phanotate$TP + sum_phanotate$FN)
-phanotate_fdr = sum_phanotate$FP / (sum_phanotate$TP + sum_phanotate$FP)
-phanotate_fnr = sum_phanotate$FN / (sum_phanotate$TP + sum_phanotate$FN)
-phanotate_f1
-phanotate_precision
-phanotate_sensitivity
-phanotate_fdr
-phanotate_fnr
+#Testing normality for the variables F1, Precision, Sensitivity, FDR and FNR of the different programs
+listpvalues_shapiro = list()
 
-fraggenescan_f1 = (2 * sum_fraggenescan$TP) / (2 * sum_fraggenescan$TP + sum_fraggenescan$FP + sum_fraggenescan$FN)
-fraggenescan_precision = sum_fraggenescan$TP / (sum_fraggenescan$TP + sum_fraggenescan$FP)
-fraggenescan_sensitivity = sum_fraggenescan$TP / (sum_fraggenescan$TP + sum_fraggenescan$FN)
-fraggenescan_fdr = sum_fraggenescan$FP / (sum_fraggenescan$TP + sum_fraggenescan$FP)
-fraggenescan_fnr = sum_fraggenescan$FN / (sum_fraggenescan$TP + sum_fraggenescan$FN)
-fraggenescan_f1
-fraggenescan_precision
-fraggenescan_sensitivity
-fraggenescan_fdr
-fraggenescan_fnr
+for(i in 32:length(subsamples_sum_all)){
+  listpvalues_shapiro[[i]] <- shapiro.test(subsamples_sum_all[[i]])$p.value
+}
 
-mga_f1 = (2 * sum_mga$TP) / (2 * sum_mga$TP + sum_mga$FP + sum_mga$FN)
-mga_precision = sum_mga$TP / (sum_mga$TP + sum_mga$FP)
-mga_sensitivity = sum_mga$TP / (sum_mga$TP + sum_mga$FN)
-mga_fdr = sum_mga$FP / (sum_mga$TP + sum_mga$FP)
-mga_fnr = sum_mga$FN / (sum_mga$TP + sum_mga$FN)
-mga_f1
-mga_precision
-mga_sensitivity
-mga_fdr
-mga_fnr
+listpvalues_shapiro <- Filter(Negate(is.null), listpvalues_shapiro)
+listpvalues_shapiro <- as.list(p.adjust(listpvalues_shapiro, method = "fdr"))
+datapvalues_shapiro <- tibble(d = 1:length(listpvalues_shapiro),
+                              variable = c("Prodigal_F1", "Prodigal_Precision", "Prodigal_Sensitivity", "Prodigal_FDR", "Prodigal_FNR",
+                                           "MetaProdigal_F1", "MetaProdigal_Precision", "MetaProdigal_Sensitivity", "MetaProdigal_FDR", "MetaProdigal_FNR",
+                                           "Glimmer_F1", "Glimmer_Precision", "Glimmer_Sensitivity", "Glimmer_FDR", "Glimmer_FNR",
+                                           "GeneMarkS_F1", "GeneMarkS_Precision", "GeneMarkS_Sensitivity", "GeneMarkS_FDR", "GeneMarkS_FNR",
+                                           "Phanotate_F1", "Phanotate_Precision", "Phanotate_Sensitivity", "Phanotate_FDR", "Phanotate_FNR", 
+                                           "FragGeneScan_F1", "FragGeneScan_Precision", "FragGeneScan_Sensitivity", "FragGeneScan_FDR", "FragGeneScan_FNR", 
+                                           "MGA_F1", "MGA_Precision", "MGA_Sensitivity", "MGA_FDR", "MGA_FNR",
+                                           "AUGUSTUS_SA_F1", "AUGUSTUS_SA_Precision", "AUGUSTUS_SA_Sensitivity", "AUGUSTUS_SA_FDR", "AUGUSTUS_SA_FNR",
+                                           "AUGUSTUS_EC_F1", "AUGUSTUS_EC_Precision", "AUGUSTUS_EC_Sensitivity", "AUGUSTUS_EC_FDR", "AUGUSTUS_EC_FNR",
+                                           "AUGUSTUS_HS_F1", "AUGUSTUS_HS_Precision", "AUGUSTUS_HS_Sensitivity", "AUGUSTUS_HS_FDR", "AUGUSTUS_HS_FNR"),
+                              p_value = listpvalues_shapiro) %>%
+  select(-d) %>%
+  pivot_wider(names_from = variable, values_from = p_value)
 
-augustus_sa_f1 = (2 * sum_augustus_sa$TP) / (2 * sum_augustus_sa$TP + sum_augustus_sa$FP + sum_augustus_sa$FN)
-augustus_sa_precision = sum_augustus_sa$TP / (sum_augustus_sa$TP + sum_augustus_sa$FP)
-augustus_sa_sensitivity = sum_augustus_sa$TP / (sum_augustus_sa$TP + sum_augustus_sa$FN)
-augustus_sa_fdr = sum_augustus_sa$FP / (sum_augustus_sa$TP + sum_augustus_sa$FP)
-augustus_sa_fnr = sum_augustus_sa$FN / (sum_augustus_sa$TP + sum_augustus_sa$FN)
-augustus_sa_f1
-augustus_sa_precision
-augustus_sa_sensitivity
-augustus_sa_fdr
-augustus_sa_fnr
+#All p-values (or near all) were significant, so there is no chance to assume normality in our data
+#Thus, the only way to compare values among them is via Kruskal-Wallis followed by pairwise tests (Dunn test)
 
-augustus_ec_f1 = (2 * sum_augustus_ec$TP) / (2 * sum_augustus_ec$TP + sum_augustus_ec$FP + sum_augustus_ec$FN)
-augustus_ec_precision = sum_augustus_ec$TP / (sum_augustus_ec$TP + sum_augustus_ec$FP)
-augustus_ec_sensitivity = sum_augustus_ec$TP / (sum_augustus_ec$TP + sum_augustus_ec$FN)
-augustus_ec_fdr = sum_augustus_ec$FP / (sum_augustus_ec$TP + sum_augustus_ec$FP)
-augustus_ec_fnr = sum_augustus_ec$FN / (sum_augustus_ec$TP + sum_augustus_ec$FN)
-augustus_ec_f1
-augustus_ec_precision
-augustus_ec_sensitivity
-augustus_ec_fdr
-augustus_ec_fnr
+#Measuring the differences between F1 values
+datastatsrep <- subsamples_sum_all %>%
+  select(c(1, 32:length(subsamples_sum_all))) %>%
+  gather(key = var_name, value = value, 2:51) %>%
+  separate(col = var_name, sep = "_", into = c("Program", "Statistic")) %>%
+  select(-subsample_number)
 
-augustus_hs_f1 = (2 * sum_augustus_hs$TP) / (2 * sum_augustus_hs$TP + sum_augustus_hs$FP + sum_augustus_hs$FN)
-augustus_hs_precision = sum_augustus_hs$TP / (sum_augustus_hs$TP + sum_augustus_hs$FP)
-augustus_hs_sensitivity = sum_augustus_hs$TP / (sum_augustus_hs$TP + sum_augustus_hs$FN)
-augustus_hs_fdr = sum_augustus_hs$FP / (sum_augustus_hs$TP + sum_augustus_hs$FP)
-augustus_hs_fnr = sum_augustus_hs$FN / (sum_augustus_hs$TP + sum_augustus_hs$FN)
-augustus_hs_f1
-augustus_hs_precision
-augustus_hs_sensitivity
-augustus_hs_fdr
-augustus_hs_fnr
+F1_datarep <- datastatsrep %>% filter(Statistic == "F1")
+Precision_datarep <- datastatsrep %>% filter(Statistic == "Precision")
+Sensitivity_datarep <- datastatsrep %>% filter(Statistic == "Sensitivity")
+FDR_datarep <- datastatsrep %>% filter(Statistic == "FDR")
+FNR_datarep <- datastatsrep %>% filter(Statistic == "FNR")
+
+kruskal.test(x = F1_datarep$value, g = F1_datarep$Program)
+dunnTest(value ~ Program, data = F1_datarep, method = "holm")
+
+kruskal.test(x = Precision_datarep$value, g = Precision_datarep$Program)
+dunnTest(value ~ Program, data = Precision_datarep, method = "holm")
+
+kruskal.test(x = Sensitivity_datarep$value, g = Sensitivity_datarep$Program)
+dunnTest(value ~ Program, data = Sensitivity_datarep, method = "holm")
+
+kruskal.test(x = FDR_datarep$value, g = FDR_datarep$Program)
+dunnTest(value ~ Program, data = FDR_datarep, method = "holm")
+
+kruskal.test(x = FNR_datarep$value, g = FNR_datarep$Program)
+dunnTest(value ~ Program, data = FNR_datarep, method = "holm")
+
+# Eukaryote (Real)
+
+sum_euk <- Basal_table %>%
+  filter(Host_domain == "Eukaryote") %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE) %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+# Eukaryotes (Subsapling)
+
+listofdfs = list()
+for(i in 1:1000){
+  listofdfs[[i]] <- Basal_table %>%
+    filter(Host_domain == "Eukaryote") %>%
+    slice_sample(prop = 0.1)
+}
+dfofdfs <- tibble(d = 1:1000, data = listofdfs)
+
+sum_euk_subsamples <- list()
+for(i in 1:1000){
+  sum_euk_subsamples[[i]] <- dfofdfs$data[[i]] %>%
+    summarize_if(is.numeric, sum, na.rm=TRUE)
+}
+
+subsamples_sum_euk <- bind_rows(sum_euk_subsamples, .id = "subsample_number") %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUSSA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSEC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSHS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+#Testing normality for the variables F1, Precision, Sensitivity, FDR and FNR of the different programs
+listpvalues_shapiro_euk = list()
+
+for(i in 32:length(subsamples_sum_euk)){
+  listpvalues_shapiro_euk[[i]] <- shapiro.test(subsamples_sum_euk[[i]])$p.value
+}
+
+listpvalues_shapiro_euk <- Filter(Negate(is.null), listpvalues_shapiro_euk)
+listpvalues_shapiro_euk <- as.list(p.adjust(listpvalues_shapiro_euk, method = "fdr"))
+datapvalues_shapiro_euk <- tibble(d = 1:length(listpvalues_shapiro_euk),
+                              variable = c("Prodigal_F1", "Prodigal_Precision", "Prodigal_Sensitivity", "Prodigal_FDR", "Prodigal_FNR",
+                                           "MetaProdigal_F1", "MetaProdigal_Precision", "MetaProdigal_Sensitivity", "MetaProdigal_FDR", "MetaProdigal_FNR",
+                                           "Glimmer_F1", "Glimmer_Precision", "Glimmer_Sensitivity", "Glimmer_FDR", "Glimmer_FNR",
+                                           "GeneMarkS_F1", "GeneMarkS_Precision", "GeneMarkS_Sensitivity", "GeneMarkS_FDR", "GeneMarkS_FNR",
+                                           "Phanotate_F1", "Phanotate_Precision", "Phanotate_Sensitivity", "Phanotate_FDR", "Phanotate_FNR", 
+                                           "FragGeneScan_F1", "FragGeneScan_Precision", "FragGeneScan_Sensitivity", "FragGeneScan_FDR", "FragGeneScan_FNR", 
+                                           "MGA_F1", "MGA_Precision", "MGA_Sensitivity", "MGA_FDR", "MGA_FNR",
+                                           "AUGUSTUS_SA_F1", "AUGUSTUS_SA_Precision", "AUGUSTUS_SA_Sensitivity", "AUGUSTUS_SA_FDR", "AUGUSTUS_SA_FNR",
+                                           "AUGUSTUS_EC_F1", "AUGUSTUS_EC_Precision", "AUGUSTUS_EC_Sensitivity", "AUGUSTUS_EC_FDR", "AUGUSTUS_EC_FNR",
+                                           "AUGUSTUS_HS_F1", "AUGUSTUS_HS_Precision", "AUGUSTUS_HS_Sensitivity", "AUGUSTUS_HS_FDR", "AUGUSTUS_HS_FNR"),
+                              p_value = listpvalues_shapiro_euk) %>%
+  select(-d) %>%
+  pivot_wider(names_from = variable, values_from = p_value)
+
+#All p-values (or near all) were significant, so there is no chance to assume normality in our data
+#Thus, the only way to compare values among them is via Kruskal-Wallis followed by pairwise tests (Dunn test)
+
+#Measuring the differences between F1 values
+datastatsrepeuk <- subsamples_sum_euk %>%
+  select(c(1, 32:length(subsamples_sum_euk))) %>%
+  gather(key = var_name, value = value, 2:51) %>%
+  separate(col = var_name, sep = "_", into = c("Program", "Statistic")) %>%
+  select(-subsample_number)
+
+F1_datarep_euk <- datastatsrepeuk %>% filter(Statistic == "F1")
+Precision_datarep_euk <- datastatsrepeuk %>% filter(Statistic == "Precision")
+Sensitivity_datarep_euk <- datastatsrepeuk %>% filter(Statistic == "Sensitivity")
+FDR_datarep_euk <- datastatsrepeuk %>% filter(Statistic == "FDR")
+FNR_datarep_euk <- datastatsrepeuk %>% filter(Statistic == "FNR")
+
+kruskal.test(x = F1_datarep_euk$value, g = F1_datarep_euk$Program)
+dunnTest(value ~ Program, data = F1_datarep_euk, method = "holm")
+
+kruskal.test(x = Precision_datarep_euk$value, g = Precision_datarep_euk$Program)
+dunnTest(value ~ Program, data = Precision_datarep_euk, method = "holm")
+
+kruskal.test(x = Sensitivity_datarep_euk$value, g = Sensitivity_datarep_euk$Program)
+dunnTest(value ~ Program, data = Sensitivity_datarep_euk, method = "holm")
+
+kruskal.test(x = FDR_datarep_euk$value, g = FDR_datarep_euk$Program)
+dunnTest(value ~ Program, data = FDR_datarep_euk, method = "holm")
+
+kruskal.test(x = FNR_datarep_euk$value, g = FNR_datarep_euk$Program)
+dunnTest(value ~ Program, data = FNR_datarep_euk, method = "holm")
+
+# Bacteria (Real)
+
+sum_bac <- Basal_table %>%
+  filter(Host_domain == "Bacteria") %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE) %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+# Bacteria (Subsampling)
+
+listofdfs = list()
+for(i in 1:1000){
+  listofdfs[[i]] <- Basal_table %>%
+    filter(Host_domain == "Bacteria") %>%
+    slice_sample(prop = 0.1)
+}
+dfofdfs <- tibble(d = 1:1000, data = listofdfs)
+
+sum_bac_subsamples <- list()
+for(i in 1:1000){
+  sum_bac_subsamples[[i]] <- dfofdfs$data[[i]] %>%
+    summarize_if(is.numeric, sum, na.rm=TRUE)
+}
+
+subsamples_sum_bac <- bind_rows(sum_bac_subsamples, .id = "subsample_number") %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUSSA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSEC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSHS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+#Testing normality for the variables F1, Precision, Sensitivity, FDR and FNR of the different programs
+listpvalues_shapiro_bac = list()
+
+for(i in 32:length(subsamples_sum_bac)){
+  listpvalues_shapiro_bac[[i]] <- shapiro.test(subsamples_sum_bac[[i]])$p.value
+}
+
+listpvalues_shapiro_bac <- Filter(Negate(is.null), listpvalues_shapiro_bac)
+listpvalues_shapiro_bac <- as.list(p.adjust(listpvalues_shapiro_bac, method = "fdr"))
+datapvalues_shapiro_bac <- tibble(d = 1:length(listpvalues_shapiro_bac),
+                                  variable = c("Prodigal_F1", "Prodigal_Precision", "Prodigal_Sensitivity", "Prodigal_FDR", "Prodigal_FNR",
+                                               "MetaProdigal_F1", "MetaProdigal_Precision", "MetaProdigal_Sensitivity", "MetaProdigal_FDR", "MetaProdigal_FNR",
+                                               "Glimmer_F1", "Glimmer_Precision", "Glimmer_Sensitivity", "Glimmer_FDR", "Glimmer_FNR",
+                                               "GeneMarkS_F1", "GeneMarkS_Precision", "GeneMarkS_Sensitivity", "GeneMarkS_FDR", "GeneMarkS_FNR",
+                                               "Phanotate_F1", "Phanotate_Precision", "Phanotate_Sensitivity", "Phanotate_FDR", "Phanotate_FNR", 
+                                               "FragGeneScan_F1", "FragGeneScan_Precision", "FragGeneScan_Sensitivity", "FragGeneScan_FDR", "FragGeneScan_FNR", 
+                                               "MGA_F1", "MGA_Precision", "MGA_Sensitivity", "MGA_FDR", "MGA_FNR",
+                                               "AUGUSTUS_SA_F1", "AUGUSTUS_SA_Precision", "AUGUSTUS_SA_Sensitivity", "AUGUSTUS_SA_FDR", "AUGUSTUS_SA_FNR",
+                                               "AUGUSTUS_EC_F1", "AUGUSTUS_EC_Precision", "AUGUSTUS_EC_Sensitivity", "AUGUSTUS_EC_FDR", "AUGUSTUS_EC_FNR",
+                                               "AUGUSTUS_HS_F1", "AUGUSTUS_HS_Precision", "AUGUSTUS_HS_Sensitivity", "AUGUSTUS_HS_FDR", "AUGUSTUS_HS_FNR"),
+                                  p_value = listpvalues_shapiro_bac) %>%
+  select(-d) %>%
+  pivot_wider(names_from = variable, values_from = p_value)
+
+#Some p-values were significant, so there is no chance to assume normality in our data
+#Thus, the only way to compare values among them is via Kruskal-Wallis followed by pairwise tests (Dunn test)
+
+#Measuring the differences between F1 values
+datastatsrepbac <- subsamples_sum_bac %>%
+  select(c(1, 32:length(subsamples_sum_bac))) %>%
+  gather(key = var_name, value = value, 2:51) %>%
+  separate(col = var_name, sep = "_", into = c("Program", "Statistic")) %>%
+  select(-subsample_number)
+
+F1_datarep_bac <- datastatsrepbac %>% filter(Statistic == "F1")
+Precision_datarep_bac <- datastatsrepbac %>% filter(Statistic == "Precision")
+Sensitivity_datarep_bac <- datastatsrepbac %>% filter(Statistic == "Sensitivity")
+FDR_datarep_bac <- datastatsrepbac %>% filter(Statistic == "FDR")
+FNR_datarep_bac <- datastatsrepbac %>% filter(Statistic == "FNR")
+
+kruskal.test(x = F1_datarep_bac$value, g = F1_datarep_bac$Program)
+dunnTest(value ~ Program, data = F1_datarep_bac, method = "holm")
+
+kruskal.test(x = Precision_datarep_bac$value, g = Precision_datarep_bac$Program)
+dunnTest(value ~ Program, data = Precision_datarep_bac, method = "holm")
+
+kruskal.test(x = Sensitivity_datarep_bac$value, g = Sensitivity_datarep_bac$Program)
+dunnTest(value ~ Program, data = Sensitivity_datarep_bac, method = "holm")
+
+kruskal.test(x = FDR_datarep_bac$value, g = FDR_datarep_bac$Program)
+dunnTest(value ~ Program, data = FDR_datarep_bac, method = "holm")
+
+kruskal.test(x = FNR_datarep_bac$value, g = FNR_datarep_bac$Program)
+dunnTest(value ~ Program, data = FNR_datarep_bac, method = "holm")
+
+# Archaea (Real)
+
+sum_arc <- Basal_table %>%
+  filter(Host_domain == "Archaea") %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE) %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+# Archaea (Subsampling)
+
+listofdfs = list()
+for(i in 1:1000){
+  listofdfs[[i]] <- Basal_table %>%
+    filter(Host_domain == "Archaea") %>%
+    slice_sample(prop = 0.1)
+}
+dfofdfs <- tibble(d = 1:1000, data = listofdfs)
+
+sum_arc_subsamples <- list()
+for(i in 1:1000){
+  sum_arc_subsamples[[i]] <- dfofdfs$data[[i]] %>%
+    summarize_if(is.numeric, sum, na.rm=TRUE)
+}
+
+subsamples_sum_arc <- bind_rows(sum_arc_subsamples, .id = "subsample_number") %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUSSA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSEC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSHS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+#Testing normality for the variables F1, Precision, Sensitivity, FDR and FNR of the different programs
+listpvalues_shapiro_arc = list()
+
+for(i in 32:length(subsamples_sum_arc)){
+  listpvalues_shapiro_arc[[i]] <- shapiro.test(subsamples_sum_arc[[i]])$p.value
+}
+
+listpvalues_shapiro_arc <- Filter(Negate(is.null), listpvalues_shapiro_arc)
+listpvalues_shapiro_arc <- as.list(p.adjust(listpvalues_shapiro_arc, method = "fdr"))
+datapvalues_shapiro_arc <- tibble(d = 1:length(listpvalues_shapiro_arc),
+                                  variable = c("Prodigal_F1", "Prodigal_Precision", "Prodigal_Sensitivity", "Prodigal_FDR", "Prodigal_FNR",
+                                               "MetaProdigal_F1", "MetaProdigal_Precision", "MetaProdigal_Sensitivity", "MetaProdigal_FDR", "MetaProdigal_FNR",
+                                               "Glimmer_F1", "Glimmer_Precision", "Glimmer_Sensitivity", "Glimmer_FDR", "Glimmer_FNR",
+                                               "GeneMarkS_F1", "GeneMarkS_Precision", "GeneMarkS_Sensitivity", "GeneMarkS_FDR", "GeneMarkS_FNR",
+                                               "Phanotate_F1", "Phanotate_Precision", "Phanotate_Sensitivity", "Phanotate_FDR", "Phanotate_FNR", 
+                                               "FragGeneScan_F1", "FragGeneScan_Precision", "FragGeneScan_Sensitivity", "FragGeneScan_FDR", "FragGeneScan_FNR", 
+                                               "MGA_F1", "MGA_Precision", "MGA_Sensitivity", "MGA_FDR", "MGA_FNR",
+                                               "AUGUSTUS_SA_F1", "AUGUSTUS_SA_Precision", "AUGUSTUS_SA_Sensitivity", "AUGUSTUS_SA_FDR", "AUGUSTUS_SA_FNR",
+                                               "AUGUSTUS_EC_F1", "AUGUSTUS_EC_Precision", "AUGUSTUS_EC_Sensitivity", "AUGUSTUS_EC_FDR", "AUGUSTUS_EC_FNR",
+                                               "AUGUSTUS_HS_F1", "AUGUSTUS_HS_Precision", "AUGUSTUS_HS_Sensitivity", "AUGUSTUS_HS_FDR", "AUGUSTUS_HS_FNR"),
+                                  p_value = listpvalues_shapiro_arc) %>%
+  select(-d) %>%
+  pivot_wider(names_from = variable, values_from = p_value)
+
+#All p-values (or near all) were significant, so there is no chance to assume normality in our data
+#Thus, the only way to compare values among them is via Kruskal-Wallis followed by pairwise tests (Dunn test)
+
+#Measuring the differences between F1 values
+datastatsreparc <- subsamples_sum_arc %>%
+  select(c(1, 32:length(subsamples_sum_arc))) %>%
+  gather(key = var_name, value = value, 2:51) %>%
+  separate(col = var_name, sep = "_", into = c("Program", "Statistic")) %>%
+  select(-subsample_number)
+
+F1_datarep_arc <- datastatsreparc %>% filter(Statistic == "F1")
+Precision_datarep_arc <- datastatsreparc %>% filter(Statistic == "Precision")
+Sensitivity_datarep_arc <- datastatsreparc %>% filter(Statistic == "Sensitivity")
+FDR_datarep_arc <- datastatsreparc %>% filter(Statistic == "FDR")
+FNR_datarep_arc <- datastatsreparc %>% filter(Statistic == "FNR")
+
+kruskal.test(x = F1_datarep_arc$value, g = F1_datarep_arc$Program)
+dunnTest(value ~ Program, data = F1_datarep_arc, method = "holm")
+
+kruskal.test(x = Precision_datarep_arc$value, g = Precision_datarep_arc$Program)
+dunnTest(value ~ Program, data = Precision_datarep_arc, method = "holm")
+
+kruskal.test(x = Sensitivity_datarep_arc$value, g = Sensitivity_datarep_arc$Program)
+dunnTest(value ~ Program, data = Sensitivity_datarep_arc, method = "holm")
+
+kruskal.test(x = FDR_datarep_arc$value, g = FDR_datarep_arc$Program)
+dunnTest(value ~ Program, data = FDR_datarep_arc, method = "holm")
+
+kruskal.test(x = FNR_datarep_arc$value, g = FNR_datarep_arc$Program)
+dunnTest(value ~ Program, data = FNR_datarep_arc, method = "holm")
+
+# DNA viruses (Real)
+
+sum_dna <- Basal_table %>%
+  filter(Nucleic_acid == "DNA") %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE) %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+# DNA (Subsampling)
+
+listofdfs = list()
+for(i in 1:1000){
+  listofdfs[[i]] <- Basal_table %>%
+    filter(Nucleic_acid == "DNA") %>%
+    slice_sample(prop = 0.1)
+}
+dfofdfs <- tibble(d = 1:1000, data = listofdfs)
+
+sum_dna_subsamples <- list()
+for(i in 1:1000){
+  sum_dna_subsamples[[i]] <- dfofdfs$data[[i]] %>%
+    summarize_if(is.numeric, sum, na.rm=TRUE)
+}
+
+subsamples_sum_dna <- bind_rows(sum_dna_subsamples, .id = "subsample_number") %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUSSA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSEC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSHS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+#Testing normality for the variables F1, Precision, Sensitivity, FDR and FNR of the different programs
+listpvalues_shapiro_dna = list()
+
+for(i in 32:length(subsamples_sum_dna)){
+  listpvalues_shapiro_dna[[i]] <- shapiro.test(subsamples_sum_dna[[i]])$p.value
+}
+
+listpvalues_shapiro_dna <- Filter(Negate(is.null), listpvalues_shapiro_dna)
+listpvalues_shapiro_dna <- as.list(p.adjust(listpvalues_shapiro_dna, method = "fdr"))
+datapvalues_shapiro_dna <- tibble(d = 1:length(listpvalues_shapiro_dna),
+                                  variable = c("Prodigal_F1", "Prodigal_Precision", "Prodigal_Sensitivity", "Prodigal_FDR", "Prodigal_FNR",
+                                               "MetaProdigal_F1", "MetaProdigal_Precision", "MetaProdigal_Sensitivity", "MetaProdigal_FDR", "MetaProdigal_FNR",
+                                               "Glimmer_F1", "Glimmer_Precision", "Glimmer_Sensitivity", "Glimmer_FDR", "Glimmer_FNR",
+                                               "GeneMarkS_F1", "GeneMarkS_Precision", "GeneMarkS_Sensitivity", "GeneMarkS_FDR", "GeneMarkS_FNR",
+                                               "Phanotate_F1", "Phanotate_Precision", "Phanotate_Sensitivity", "Phanotate_FDR", "Phanotate_FNR", 
+                                               "FragGeneScan_F1", "FragGeneScan_Precision", "FragGeneScan_Sensitivity", "FragGeneScan_FDR", "FragGeneScan_FNR", 
+                                               "MGA_F1", "MGA_Precision", "MGA_Sensitivity", "MGA_FDR", "MGA_FNR",
+                                               "AUGUSTUS_SA_F1", "AUGUSTUS_SA_Precision", "AUGUSTUS_SA_Sensitivity", "AUGUSTUS_SA_FDR", "AUGUSTUS_SA_FNR",
+                                               "AUGUSTUS_EC_F1", "AUGUSTUS_EC_Precision", "AUGUSTUS_EC_Sensitivity", "AUGUSTUS_EC_FDR", "AUGUSTUS_EC_FNR",
+                                               "AUGUSTUS_HS_F1", "AUGUSTUS_HS_Precision", "AUGUSTUS_HS_Sensitivity", "AUGUSTUS_HS_FDR", "AUGUSTUS_HS_FNR"),
+                                  p_value = listpvalues_shapiro_dna) %>%
+  select(-d) %>%
+  pivot_wider(names_from = variable, values_from = p_value)
+
+#All p-values (or near all) were significant, so there is no chance to assume normality in our data
+#Thus, the only way to compare values among them is via Kruskal-Wallis followed by pairwise tests (Dunn test)
+
+#Measuring the differences between F1 values
+datastatsrepdna <- subsamples_sum_dna %>%
+  select(c(1, 32:length(subsamples_sum_dna))) %>%
+  gather(key = var_name, value = value, 2:51) %>%
+  separate(col = var_name, sep = "_", into = c("Program", "Statistic")) %>%
+  select(-subsample_number)
+
+F1_datarep_dna <- datastatsrepdna %>% filter(Statistic == "F1")
+Precision_datarep_dna <- datastatsrepdna %>% filter(Statistic == "Precision")
+Sensitivity_datarep_dna <- datastatsrepdna %>% filter(Statistic == "Sensitivity")
+FDR_datarep_dna <- datastatsrepdna %>% filter(Statistic == "FDR")
+FNR_datarep_dna <- datastatsrepdna %>% filter(Statistic == "FNR")
+
+kruskal.test(x = F1_datarep_dna$value, g = F1_datarep_dna$Program)
+dunnTest(value ~ Program, data = F1_datarep_dna, method = "holm")
+
+kruskal.test(x = Precision_datarep_dna$value, g = Precision_datarep_dna$Program)
+dunnTest(value ~ Program, data = Precision_datarep_dna, method = "holm")
+
+kruskal.test(x = Sensitivity_datarep_dna$value, g = Sensitivity_datarep_dna$Program)
+dunnTest(value ~ Program, data = Sensitivity_datarep_dna, method = "holm")
+
+kruskal.test(x = FDR_datarep_dna$value, g = FDR_datarep_dna$Program)
+dunnTest(value ~ Program, data = FDR_datarep_dna, method = "holm")
+
+kruskal.test(x = FNR_datarep_dna$value, g = FNR_datarep_dna$Program)
+dunnTest(value ~ Program, data = FNR_datarep_dna, method = "holm")
+
+# RNA viruses (Real)
+
+sum_rna <- Basal_table %>%
+  filter(Nucleic_acid == "RNA") %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE) %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+# RNA (Subsampling)
+
+listofdfs = list()
+for(i in 1:1000){
+  listofdfs[[i]] <- Basal_table %>%
+    filter(Nucleic_acid == "RNA") %>%
+    slice_sample(prop = 0.1)
+}
+dfofdfs <- tibble(d = 1:1000, data = listofdfs)
+
+sum_rna_subsamples <- list()
+for(i in 1:1000){
+  sum_rna_subsamples[[i]] <- dfofdfs$data[[i]] %>%
+    summarize_if(is.numeric, sum, na.rm=TRUE)
+}
+
+subsamples_sum_rna <- bind_rows(sum_rna_subsamples, .id = "subsample_number") %>%
+  rowwise() %>%
+  mutate(Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+         Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+         Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+         Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+         MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+         MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+         Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+         Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+         Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+         Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+         GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+         GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+         Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+         Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+         Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+         Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+         FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+         FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+         MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+         MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+         MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+         MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+         MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+         AUGUSTUSSA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSSA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+         AUGUSTUSSA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+         AUGUSTUSEC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSEC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+         AUGUSTUSEC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+         AUGUSTUSHS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+         AUGUSTUSHS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+         AUGUSTUSHS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS))
+
+#Testing normality for the variables F1, Precision, Sensitivity, FDR and FNR of the different programs
+listpvalues_shapiro_rna = list()
+
+for(i in 32:length(subsamples_sum_rna)){
+  listpvalues_shapiro_rna[[i]] <- shapiro.test(subsamples_sum_rna[[i]])$p.value
+}
+
+listpvalues_shapiro_rna <- Filter(Negate(is.null), listpvalues_shapiro_rna)
+listpvalues_shapiro_rna <- as.list(p.adjust(listpvalues_shapiro_rna, method = "fdr"))
+datapvalues_shapiro_rna <- tibble(d = 1:length(listpvalues_shapiro_rna),
+                                  variable = c("Prodigal_F1", "Prodigal_Precision", "Prodigal_Sensitivity", "Prodigal_FDR", "Prodigal_FNR",
+                                               "MetaProdigal_F1", "MetaProdigal_Precision", "MetaProdigal_Sensitivity", "MetaProdigal_FDR", "MetaProdigal_FNR",
+                                               "Glimmer_F1", "Glimmer_Precision", "Glimmer_Sensitivity", "Glimmer_FDR", "Glimmer_FNR",
+                                               "GeneMarkS_F1", "GeneMarkS_Precision", "GeneMarkS_Sensitivity", "GeneMarkS_FDR", "GeneMarkS_FNR",
+                                               "Phanotate_F1", "Phanotate_Precision", "Phanotate_Sensitivity", "Phanotate_FDR", "Phanotate_FNR", 
+                                               "FragGeneScan_F1", "FragGeneScan_Precision", "FragGeneScan_Sensitivity", "FragGeneScan_FDR", "FragGeneScan_FNR", 
+                                               "MGA_F1", "MGA_Precision", "MGA_Sensitivity", "MGA_FDR", "MGA_FNR",
+                                               "AUGUSTUS_SA_F1", "AUGUSTUS_SA_Precision", "AUGUSTUS_SA_Sensitivity", "AUGUSTUS_SA_FDR", "AUGUSTUS_SA_FNR",
+                                               "AUGUSTUS_EC_F1", "AUGUSTUS_EC_Precision", "AUGUSTUS_EC_Sensitivity", "AUGUSTUS_EC_FDR", "AUGUSTUS_EC_FNR",
+                                               "AUGUSTUS_HS_F1", "AUGUSTUS_HS_Precision", "AUGUSTUS_HS_Sensitivity", "AUGUSTUS_HS_FDR", "AUGUSTUS_HS_FNR"),
+                                  p_value = listpvalues_shapiro_rna) %>%
+  select(-d) %>%
+  pivot_wider(names_from = variable, values_from = p_value)
+
+#All p-values (or near all) were significant, so there is no chance to assume normality in our data
+#Thus, the only way to compare values among them is via Kruskal-Wallis followed by pairwise tests (Dunn test)
+
+#Measuring the differences between F1 values
+datastatsreprna <- subsamples_sum_rna %>%
+  select(c(1, 32:length(subsamples_sum_rna))) %>%
+  gather(key = var_name, value = value, 2:51) %>%
+  separate(col = var_name, sep = "_", into = c("Program", "Statistic")) %>%
+  select(-subsample_number)
+
+F1_datarep_rna <- datastatsreprna %>% filter(Statistic == "F1")
+Precision_datarep_rna <- datastatsreprna %>% filter(Statistic == "Precision")
+Sensitivity_datarep_rna <- datastatsreprna %>% filter(Statistic == "Sensitivity")
+FDR_datarep_rna <- datastatsreprna %>% filter(Statistic == "FDR")
+FNR_datarep_rna <- datastatsreprna %>% filter(Statistic == "FNR")
+
+kruskal.test(x = F1_datarep_rna$value, g = F1_datarep_rna$Program)
+dunnTest(value ~ Program, data = F1_datarep_rna, method = "holm")
+
+kruskal.test(x = Precision_datarep_rna$value, g = Precision_datarep_rna$Program)
+dunnTest(value ~ Program, data = Precision_datarep_rna, method = "holm")
+
+kruskal.test(x = Sensitivity_datarep_rna$value, g = Sensitivity_datarep_rna$Program)
+dunnTest(value ~ Program, data = Sensitivity_datarep_rna, method = "holm")
+
+kruskal.test(x = FDR_datarep_rna$value, g = FDR_datarep_rna$Program)
+dunnTest(value ~ Program, data = FDR_datarep_rna, method = "holm")
+
+kruskal.test(x = FNR_datarep_rna$value, g = FNR_datarep_rna$Program)
+dunnTest(value ~ Program, data = FNR_datarep_rna, method = "holm")
+
+
+
+
+
+%>% 
+  spread(key = names(subsamples_sum_all)[1],value = 'value') 
+
+
+
+
+  
+  
+
+
+# dunnTest(flipper_length_mm ~ species,
+#          data = dat,
+#          method = "holm"
+# )
+# 
+# subsamples_sum_all$...
+# Prodigal_F1 = (2 * TP_Prodigal) / (2 * TP_Prodigal + FP_Prodigal + FN_Prodigal),
+# Prodigal_Precision = TP_Prodigal / (TP_Prodigal + FP_Prodigal),
+# Prodigal_Sensitivity = TP_Prodigal / (TP_Prodigal + FN_Prodigal),
+# Prodigal_FDR = FP_Prodigal / (TP_Prodigal + FP_Prodigal),
+# Prodigal_FNR = FN_Prodigal / (TP_Prodigal + FN_Prodigal),
+# MetaProdigal_F1 = (2 * TP_MetaProdigal) / (2 * TP_MetaProdigal + FP_MetaProdigal + FN_MetaProdigal),
+# MetaProdigal_Precision = TP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+# MetaProdigal_Sensitivity = TP_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+# MetaProdigal_FDR = FP_MetaProdigal / (TP_MetaProdigal + FP_MetaProdigal),
+# MetaProdigal_FNR = FN_MetaProdigal / (TP_MetaProdigal + FN_MetaProdigal),
+# Glimmer_F1 = (2 * TP_Glimmer) / (2 * TP_Glimmer + FP_Glimmer + FN_Glimmer),
+# Glimmer_Precision = TP_Glimmer / (TP_Glimmer + FP_Glimmer),
+# Glimmer_Sensitivity = TP_Glimmer / (TP_Glimmer + FN_Glimmer),
+# Glimmer_FDR = FP_Glimmer / (TP_Glimmer + FP_Glimmer),
+# Glimmer_FNR = FN_Glimmer / (TP_Glimmer + FN_Glimmer),
+# GeneMarkS_F1 = (2 * TP_GeneMarkS) / (2 * TP_GeneMarkS + FP_GeneMarkS + FN_GeneMarkS),
+# GeneMarkS_Precision = TP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+# GeneMarkS_Sensitivity = TP_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+# GeneMarkS_FDR = FP_GeneMarkS / (TP_GeneMarkS + FP_GeneMarkS),
+# GeneMarkS_FNR = FN_GeneMarkS / (TP_GeneMarkS + FN_GeneMarkS),
+# Phanotate_F1 = (2 * TP_Phanotate) / (2 * TP_Phanotate + FP_Phanotate + FN_Phanotate),
+# Phanotate_Precision = TP_Phanotate / (TP_Phanotate + FP_Phanotate),
+# Phanotate_Sensitivity = TP_Phanotate / (TP_Phanotate + FN_Phanotate),
+# Phanotate_FDR = FP_Phanotate / (TP_Phanotate + FP_Phanotate),
+# Phanotate_FNR = FN_Phanotate / (TP_Phanotate + FN_Phanotate),
+# FragGeneScan_F1 = (2 * TP_FragGeneScan) / (2 * TP_FragGeneScan + FP_FragGeneScan + FN_FragGeneScan),
+# FragGeneScan_Precision = TP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+# FragGeneScan_Sensitivity = TP_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+# FragGeneScan_FDR = FP_FragGeneScan / (TP_FragGeneScan + FP_FragGeneScan),
+# FragGeneScan_FNR = FN_FragGeneScan / (TP_FragGeneScan + FN_FragGeneScan),
+# MGA_F1 = (2 * TP_MGA) / (2 * TP_MGA + FP_MGA + FN_MGA),
+# MGA_Precision = TP_MGA / (TP_MGA + FP_MGA),
+# MGA_Sensitivity = TP_MGA / (TP_MGA + FN_MGA),
+# MGA_FDR = FP_MGA / (TP_MGA + FP_MGA),
+# MGA_FNR = FN_MGA / (TP_MGA + FN_MGA),
+# AUGUSTUS_SA_F1 = (2 * TP_AUGUSTUS_SA) / (2 * TP_AUGUSTUS_SA + FP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+# AUGUSTUS_SA_Precision = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+# AUGUSTUS_SA_Sensitivity = TP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+# AUGUSTUS_SA_FDR = FP_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FP_AUGUSTUS_SA),
+# AUGUSTUS_SA_FNR = FN_AUGUSTUS_SA / (TP_AUGUSTUS_SA + FN_AUGUSTUS_SA),
+# AUGUSTUS_EC_F1 = (2 * TP_AUGUSTUS_EC) / (2 * TP_AUGUSTUS_EC + FP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+# AUGUSTUS_EC_Precision = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+# AUGUSTUS_EC_Sensitivity = TP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+# AUGUSTUS_EC_FDR = FP_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FP_AUGUSTUS_EC),
+# AUGUSTUS_EC_FNR = FN_AUGUSTUS_EC / (TP_AUGUSTUS_EC + FN_AUGUSTUS_EC),
+# AUGUSTUS_HS_F1 = (2 * TP_AUGUSTUS_HS) / (2 * TP_AUGUSTUS_HS + FP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+# AUGUSTUS_HS_Precision = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+# AUGUSTUS_HS_Sensitivity = TP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS),
+# AUGUSTUS_HS_FDR = FP_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FP_AUGUSTUS_HS),
+# AUGUSTUS_HS_FNR = FN_AUGUSTUS_HS / (TP_AUGUSTUS_HS + FN_AUGUSTUS_HS)
 
 # Eukaryotic viruses
 
@@ -1249,90 +2120,4 @@ augustus_hs_rna_precision
 augustus_hs_rna_sensitivity
 augustus_hs_rna_fdr
 augustus_hs_rna_fnr
-
-# Graphs
-all_precision <- c(prodigal_precision, metaprodigal_precision, glimmer_precision, genemarks_precision, 
-                   phanotate_precision, fraggenescan_precision, mga_precision, augustus_sa_precision, augustus_ec_precision, 
-                   augustus_hs_precision)
-all_sensitivity <- c(prodigal_sensitivity, metaprodigal_sensitivity, glimmer_sensitivity, genemarks_sensitivity, 
-                     phanotate_sensitivity, fraggenescan_sensitivity, mga_sensitivity, augustus_sa_sensitivity, augustus_ec_sensitivity, 
-                     augustus_hs_sensitivity)
-all_programs <- c("Prodigal", "Metaprodigal", "Glimmer", "GeneMarkS", "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS_SA", 
-                  "AUGUSTUS_EC", "AUGUSTUS_HS")
-maintablestats <- tibble(programs = all_programs, precision = all_precision, sensitivity = all_sensitivity)
-genplot2 <- ggplot(maintablestats, aes(x= precision, y= sensitivity, colour=as.factor(programs), label=programs)) +
-  geom_text(aes(label=programs),hjust=0, vjust=0, size=5) + xlim(0,1) + ylim (0,1) +
-  scale_color_manual(values=c('lightpink', 'goldenrod', 'purple', 'blue', 'springgreen4', 'chartreuse3', 'orange', 'deeppink', 'cyan3', 'firebrick'))
-
-all_arc_precision <- c(prodigal_arc_precision, metaprodigal_arc_precision, glimmer_arc_precision, genemarks_arc_precision, 
-                       phanotate_arc_precision, fraggenescan_arc_precision, mga_arc_precision, augustus_sa_arc_precision, 
-                       augustus_ec_arc_precision, augustus_hs_arc_precision)
-all_arc_sensitivity <- c(prodigal_arc_sensitivity, metaprodigal_arc_sensitivity, glimmer_arc_sensitivity, genemarks_arc_sensitivity, 
-                         phanotate_arc_sensitivity, fraggenescan_arc_sensitivity, mga_arc_sensitivity, augustus_sa_arc_sensitivity, 
-                         augustus_ec_arc_sensitivity, augustus_hs_arc_sensitivity)
-all_arc_programs <- c("Prodigal", "Metaprodigal", "Glimmer", "GeneMarkS", "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS_SA", 
-                      "AUGUSTUS_EC", "AUGUSTUS_HS")
-maintablestats_arc <- tibble(programs = all_arc_programs, precision = all_arc_precision, sensitivity = all_arc_sensitivity)
-arcplot2 <- ggplot(maintablestats_arc, aes(x= precision, y= sensitivity, colour=as.factor(programs), label=programs)) +
-  geom_text(aes(label=programs),hjust=0, vjust=0, size=5) + xlim(0,1) + ylim (0,1) +
-  scale_color_manual(values=c('lightpink', 'goldenrod', 'purple', 'blue', 'springgreen4', 'chartreuse3', 'orange', 'deeppink', 'cyan3', 'firebrick'))
-
-all_bac_precision <- c(prodigal_bac_precision, metaprodigal_bac_precision, glimmer_bac_precision, genemarks_bac_precision, 
-                       phanotate_bac_precision, fraggenescan_bac_precision, mga_bac_precision, augustus_sa_bac_precision, 
-                       augustus_ec_bac_precision, augustus_hs_bac_precision)
-all_bac_sensitivity <- c(prodigal_bac_sensitivity, metaprodigal_bac_sensitivity, glimmer_bac_sensitivity, genemarks_bac_sensitivity, 
-                         phanotate_bac_sensitivity, fraggenescan_bac_sensitivity, mga_bac_sensitivity, augustus_sa_bac_sensitivity, 
-                         augustus_ec_bac_sensitivity, augustus_hs_bac_sensitivity)
-all_bac_programs <- c("Prodigal", "Metaprodigal", "Glimmer", "GeneMarkS", "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS_SA", 
-                      "AUGUSTUS_EC", "AUGUSTUS_HS")
-maintablestats_bac <- tibble(programs = all_bac_programs, precision = all_bac_precision, sensitivity = all_bac_sensitivity)
-bacplot2 <- ggplot(maintablestats_bac, aes(x= precision, y= sensitivity, colour=as.factor(programs), label=programs)) +
-  geom_text(aes(label=programs),hjust=0, vjust=0, size=5) + xlim(0,1) + ylim (0,1) +
-  scale_color_manual(values=c('lightpink', 'goldenrod', 'purple', 'blue', 'springgreen4', 'chartreuse3', 'orange', 'deeppink', 'cyan3', 'firebrick'))
-
-all_euk_precision <- c(prodigal_euk_precision, metaprodigal_euk_precision, glimmer_euk_precision, genemarks_euk_precision, 
-                       phanotate_euk_precision, fraggenescan_euk_precision, mga_euk_precision, augustus_sa_euk_precision, 
-                       augustus_ec_euk_precision, augustus_hs_euk_precision)
-all_euk_sensitivity <- c(prodigal_euk_sensitivity, metaprodigal_euk_sensitivity, glimmer_euk_sensitivity, genemarks_euk_sensitivity, 
-                         phanotate_euk_sensitivity, fraggenescan_euk_sensitivity, mga_euk_sensitivity, augustus_sa_euk_sensitivity, 
-                         augustus_ec_euk_sensitivity, augustus_hs_euk_sensitivity)
-all_euk_programs <- c("Prodigal", "Metaprodigal", "Glimmer", "GeneMarkS", "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS_SA", 
-                      "AUGUSTUS_EC", "AUGUSTUS_HS")
-maintablestats_euk <- tibble(programs = all_euk_programs, precision = all_euk_precision, sensitivity = all_euk_sensitivity)
-eukplot2 <- ggplot(maintablestats_euk, aes(x= precision, y= sensitivity, colour=as.factor(programs), label=programs)) +
-  geom_text(aes(label=programs),hjust=0, vjust=0, size=5) + xlim(0,1) + ylim (0,1) +
-  scale_color_manual(values=c('lightpink', 'goldenrod', 'purple', 'blue', 'springgreen4', 'chartreuse3', 'orange', 'deeppink', 'cyan3', 'firebrick'))
-
-all_dna_precision <- c(prodigal_dna_precision, metaprodigal_dna_precision, glimmer_dna_precision, genemarks_dna_precision, 
-                       phanotate_dna_precision, fraggenescan_dna_precision, mga_dna_precision, augustus_sa_dna_precision, 
-                       augustus_ec_dna_precision, augustus_hs_dna_precision)
-all_dna_sensitivity <- c(prodigal_dna_sensitivity, metaprodigal_dna_sensitivity, glimmer_dna_sensitivity, genemarks_dna_sensitivity, 
-                         phanotate_dna_sensitivity, fraggenescan_dna_sensitivity, mga_dna_sensitivity, augustus_sa_dna_sensitivity, 
-                         augustus_ec_dna_sensitivity, augustus_hs_dna_sensitivity)
-all_dna_programs <- c("Prodigal", "Metaprodigal", "Glimmer", "GeneMarkS", "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS_SA", 
-                      "AUGUSTUS_EC", "AUGUSTUS_HS")
-maintablestats_dna <- tibble(programs = all_dna_programs, precision = all_dna_precision, sensitivity = all_dna_sensitivity)
-dnaplot2 <- ggplot(maintablestats_dna, aes(x= precision, y= sensitivity, colour=as.factor(programs), label=programs)) +
-  geom_text(aes(label=programs),hjust=0, vjust=0, size=5) + xlim(0,1) + ylim (0,1) +
-  scale_color_manual(values=c('lightpink', 'goldenrod', 'purple', 'blue', 'springgreen4', 'chartreuse3', 'orange', 'deeppink', 'cyan3', 'firebrick'))
-
-all_rna_precision <- c(prodigal_rna_precision, metaprodigal_rna_precision, glimmer_rna_precision, genemarks_rna_precision, 
-                       phanotate_rna_precision, fraggenescan_rna_precision, mga_rna_precision, augustus_sa_rna_precision, 
-                       augustus_ec_rna_precision, augustus_hs_rna_precision)
-all_rna_sensitivity <- c(prodigal_rna_sensitivity, metaprodigal_rna_sensitivity, glimmer_rna_sensitivity, genemarks_rna_sensitivity, 
-                         phanotate_rna_sensitivity, fraggenescan_rna_sensitivity, mga_rna_sensitivity, augustus_sa_rna_sensitivity, 
-                         augustus_ec_rna_sensitivity, augustus_hs_rna_sensitivity)
-all_rna_programs <- c("Prodigal", "Metaprodigal", "Glimmer", "GeneMarkS", "PHANOTATE", "FragGeneScan", "MGA", "AUGUSTUS_SA", 
-                      "AUGUSTUS_EC", "AUGUSTUS_HS")
-maintablestats_rna <- tibble(programs = all_rna_programs, precision = all_rna_precision, sensitivity = all_rna_sensitivity)
-rnaplot2 <- ggplot(maintablestats_rna, aes(x= precision, y= sensitivity, colour=as.factor(programs), label=programs)) +
-  geom_text(aes(label=programs),hjust=0, vjust=0, size=5) + xlim(0,1) + ylim (0,1) +
-  scale_color_manual(values=c('lightpink', 'goldenrod', 'purple', 'blue', 'springgreen4', 'chartreuse3', 'orange', 'deeppink', 'cyan3', 'firebrick'))
-
-legend2 <- get_legend(genplot2)
-svg("figure_2.svg", width = 10, height = 10)
-plot_grid(genplot2 + theme(legend.position = "null"), arcplot2 + theme(legend.position = "null"), bacplot2 + theme(legend.position = "null"), 
-                     eukplot2 + theme(legend.position = "null"), dnaplot2 + theme(legend.position = "null"), rnaplot2 + theme(legend.position = "null"), labels = c("A", "B", "C", "D", "E", "F"), ncol = 2)
-#plot_grid(topgrid2, legend2, ncol = 1, rel_heights = c(3,.25))
-dev.off()
 
